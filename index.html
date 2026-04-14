@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Theme Switcher</title>
+  <style>
+    /* ===== Base / Reset ===== */
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      position: relative;
+      background: #D1D8E8;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      overflow: hidden;
+      transition: background 450ms ease;
+    }
+
+    body.dark {
+      background: #252C3D;
+    }
+
+    /* ===== Layout ===== */
+    .toggle-shell {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      width: 403px;
+      height: 156px;
+      transform: translate(-50%, -50%) scale(0.5);
+      transform-origin: center;
+    }
+
+    .toggle-input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* ===== Toggle: Shared (Light + Dark) ===== */
+    .toggle {
+      position: relative;
+      display: flex;
+      width: 403px;
+      padding: 12px;
+      align-items: center;
+      gap: 8px;
+      border-radius: 600px;
+      clip-path: inset(0 round 600px);
+      background: #2f8bde;
+      box-shadow:
+        -4.481px -4.481px 10px 0 rgba(0, 0, 0, 0.25) inset,
+        4.481px 8.962px 10px 0 rgba(0, 0, 0, 0.25) inset;
+      cursor: pointer;
+      overflow: hidden;
+      transition: background 450ms ease, box-shadow 450ms ease;
+      user-select: none;
+      z-index: 1;
+    }
+
+    .thumb {
+      position: relative;
+      width: 132px;
+      height: 132px;
+      flex: 0 0 auto;
+      transition: transform 550ms cubic-bezier(0.2, 0.9, 0.2, 1);
+      z-index: 5;
+    }
+
+    .sun {
+      position: absolute;
+      left: -12px;
+      top: 0;
+      width: 144px;
+      height: 144px;
+      display: block;
+      object-fit: fill;
+      transform: none;
+      z-index: 7;
+      transition: transform 450ms ease, opacity 450ms ease;
+    }
+
+    .beam-wrap {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 309px;
+      height: 156px;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 1;
+      transition: opacity 450ms ease, transform 450ms ease;
+    }
+
+    .beam-wrap-dark {
+      position: absolute;
+      left: 57px;
+      top: 72px;
+      width: 309px;
+      height: 156px;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 3;
+      opacity: 0;
+      transition: opacity 450ms ease, transform 450ms ease;
+    }
+
+    .beam {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      opacity: 0.4;
+    }
+
+    .beam-light {
+      transform: translate(-50%, -50%);
+    }
+
+    .beam-dark {
+      transform: translate(-50%, -50%);
+    }
+
+    .beam-senior {
+      width: 370.8px;
+      height: auto;
+      z-index: 1;
+      opacity: 0.4;
+    }
+
+    .beam-middle {
+      width: 230.4px;
+      height: auto;
+      z-index: 2;
+      opacity: 0.4;
+    }
+
+    .beam-junior {
+      width: 301.2px;
+      height: auto;
+      z-index: 3;
+      opacity: 0.4;
+    }
+
+    .cloud-wrap {
+      position: absolute;
+      left: 50%;
+      top: 72%;
+      width: 500px;
+      height: 229px;
+      transform: translate(calc(-43% + 64px), -53%);
+      pointer-events: none;
+      z-index: 2;
+      transition: opacity 450ms ease, transform 450ms ease;
+    }
+
+    .cloud {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 500px;
+      height: 229px;
+      transform: translate(-50%, -50%);
+    }
+
+    .cloud-junior {
+      z-index: 1;
+      animation: drift-junior 11s cubic-bezier(0.42, 0, 0.58, 1) infinite;
+    }
+
+    .cloud-senior {
+      z-index: 2;
+      animation: drift-senior 13s cubic-bezier(0.42, 0, 0.58, 1) infinite;
+    }
+
+    .sky-decor {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 6;
+    }
+
+    .moon {
+      position: absolute;
+      width: 150px;
+      height: 144px;
+      left: -18px;
+      top: 0;
+      display: block;
+      object-fit: fill;
+      transform-origin: center;
+      z-index: 7;
+      opacity: 0;
+      transform: scale(0.85);
+      transition: transform 850ms cubic-bezier(0.2, 0.9, 0.2, 1), opacity 350ms ease;
+    }
+
+    .stars-layer {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: opacity 350ms ease;
+    }
+
+    .star-group-svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .star-group-svg path {
+      opacity: 0;
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: star-group-twinkle 2.8s ease-in-out infinite;
+    }
+
+    .star-group-svg path:nth-of-type(1) { animation-delay: 0.1s; animation-duration: 2.4s; }
+    .star-group-svg path:nth-of-type(2) { animation-delay: 0.9s; animation-duration: 3.0s; }
+    .star-group-svg path:nth-of-type(3) { animation-delay: 0.4s; animation-duration: 2.6s; }
+    .star-group-svg path:nth-of-type(4) { animation-delay: 1.2s; animation-duration: 3.2s; }
+    .star-group-svg path:nth-of-type(5) { animation-delay: 0.2s; animation-duration: 2.7s; }
+    .star-group-svg path:nth-of-type(6) { animation-delay: 1.0s; animation-duration: 3.1s; }
+    .star-group-svg path:nth-of-type(7) { animation-delay: 0.6s; animation-duration: 2.5s; }
+    .star-group-svg path:nth-of-type(8) { animation-delay: 1.4s; animation-duration: 3.3s; }
+    .star-group-svg path:nth-of-type(9) { animation-delay: 0.3s; animation-duration: 2.9s; }
+    .star-group-svg path:nth-of-type(10) { animation-delay: 1.1s; animation-duration: 3.4s; }
+
+    .star-group-svg path:nth-of-type(3n) {
+      animation-name: star-group-twinkle-soft;
+    }
+
+    /* ===== Theme: Dark Overrides ===== */
+    .toggle-input:checked + .toggle {
+      background: #031221;
+      box-shadow:
+        -4.481px -4.481px 10px 0 rgba(48, 66, 86, 0.25) inset,
+        4.481px 8.962px 10px 0 rgba(0, 0, 0, 0.28) inset;
+    }
+
+    .toggle-input:checked + .toggle .thumb {
+      transform: translateX(247px);
+    }
+
+    .toggle-input:checked + .toggle .cloud-wrap {
+      opacity: 0;
+      transform: translate(calc(-43% + 64px), -45%) scale(0.88);
+    }
+
+    .toggle-input:checked + .toggle .beam-wrap {
+      opacity: 0;
+    }
+
+    .toggle-input:checked + .toggle .beam-wrap-dark {
+      opacity: 1;
+      transform: translate(-50%, -50%);
+    }
+
+    .toggle-input:checked + .toggle .sun {
+      opacity: 0;
+      transform: scale(0.88);
+    }
+
+    .toggle-input:checked + .toggle .beam-senior {
+      opacity: 0.4;
+    }
+
+    .toggle-input:checked + .toggle .beam-middle {
+      opacity: 0.4;
+    }
+
+    .toggle-input:checked + .toggle .beam-junior {
+      opacity: 0.4;
+    }
+
+    .toggle-input:checked + .toggle .moon {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .toggle-input:checked + .toggle .stars-layer {
+      opacity: 1;
+    }
+
+
+    @keyframes drift-junior {
+      0%, 100% { transform: translate(-50%, -50%) translateX(-6px) translateY(0); }
+      50% { transform: translate(-50%, -50%) translateX(10px) translateY(-3px); }
+    }
+
+    @keyframes drift-senior {
+      0%, 100% { transform: translate(-50%, -50%) translateX(5px) translateY(-1px); }
+      50% { transform: translate(-50%, -50%) translateX(-9px) translateY(2px); }
+    }
+
+    @keyframes star-group-twinkle {
+      0%, 100% { opacity: 0.2; transform: scale(0.82); }
+      35% { opacity: 0.95; transform: scale(1.06); }
+      65% { opacity: 0.45; transform: scale(0.92); }
+    }
+
+    @keyframes star-group-twinkle-soft {
+      0%, 100% { opacity: 0.18; transform: scale(0.86); }
+      50% { opacity: 0.78; transform: scale(1); }
+    }
+
+  </style>
+</head>
+<body>
+  <!-- ===== Theme Toggle Widget ===== -->
+  <div class="toggle-shell">
+    <input id="theme-toggle" class="toggle-input" type="checkbox" aria-label="Переключатель темы">
+    <label class="toggle" for="theme-toggle">
+      <!-- Thumb: Celestial Layers -->
+      <div class="thumb" aria-hidden="true">
+        <!-- Sun rays -->
+        <div class="beam-wrap">
+          <img src="beam/Senior.svg" alt="" class="beam beam-light beam-senior">
+          <img src="beam/Middle.svg" alt="" class="beam beam-light beam-middle">
+          <img src="beam/Junior.svg" alt="" class="beam beam-light beam-junior">
+        </div>
+
+        <!-- Moon rays (dark only) -->
+        <div class="beam-wrap-dark">
+          <img src="beam/Senior.svg" alt="" class="beam beam-dark beam-senior">
+          <img src="beam/Middle.svg" alt="" class="beam beam-dark beam-middle">
+          <img src="beam/Junior.svg" alt="" class="beam beam-dark beam-junior">
+        </div>
+
+        <!-- Clouds -->
+        <div class="cloud-wrap">
+          <img src="clouds/Junior.svg" alt="" class="cloud cloud-junior">
+          <img src="clouds/Senior.svg" alt="" class="cloud cloud-senior">
+        </div>
+
+        <!-- Main icons -->
+        <img src="Sun.svg" alt="" class="sun">
+        <img src="Moon.svg" alt="" class="moon">
+      </div>
+
+      <!-- Background night decor -->
+      <div class="sky-decor" aria-hidden="true">
+        <div class="stars-layer">
+          <svg class="star-group-svg" viewBox="0 0 403 156" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+            <path d="M71.164 24.2738C71.5589 23.6721 72.4411 23.6721 72.836 24.2738L75.0235 27.6069C75.127 27.7646 75.2731 27.8899 75.4448 27.9681L79.0035 29.5901C79.7838 29.9457 79.7838 31.0543 79.0035 31.4099L75.4448 33.0319C75.2731 33.1101 75.127 33.2354 75.0235 33.3931L72.836 36.7262C72.4411 37.3279 71.5589 37.3279 71.164 36.7262L68.9765 33.3931C68.873 33.2354 68.7269 33.1101 68.5552 33.0319L64.9965 31.4099C64.2162 31.0543 64.2162 29.9457 64.9965 29.5901L68.5552 27.9681C68.7269 27.8899 68.873 27.7646 68.9765 27.6069L71.164 24.2738Z" fill="white"/>
+            <path d="M35.164 78.2738C35.5589 77.6721 36.4411 77.6721 36.836 78.2738L39.0235 81.6069C39.127 81.7646 39.2731 81.8899 39.4448 81.9681L43.0035 83.5901C43.7838 83.9457 43.7838 85.0543 43.0035 85.4099L39.4448 87.0319C39.2731 87.1101 39.127 87.2354 39.0235 87.3931L36.836 90.7262C36.4411 91.3279 35.5589 91.3279 35.164 90.7262L32.9765 87.3931C32.873 87.2354 32.7269 87.1101 32.5552 87.0319L28.9965 85.4099C28.2162 85.0543 28.2162 83.9457 28.9965 83.5901L32.5552 81.9681C32.7269 81.8899 32.873 81.7646 32.9765 81.6069L35.164 78.2738Z" fill="white"/>
+            <path d="M151.164 54.2738C151.559 53.6721 152.441 53.6721 152.836 54.2738L155.023 57.6069C155.127 57.7646 155.273 57.8899 155.445 57.9681L159.003 59.5901C159.784 59.9457 159.784 61.0543 159.003 61.4099L155.445 63.0319C155.273 63.1101 155.127 63.2354 155.023 63.3931L152.836 66.7262C152.441 67.3279 151.559 67.3279 151.164 66.7262L148.976 63.3931C148.873 63.2354 148.727 63.1101 148.555 63.0319L144.997 61.4099C144.216 61.0543 144.216 59.9457 144.997 59.5901L148.555 57.9681C148.727 57.8899 148.873 57.7646 148.976 57.6069L151.164 54.2738Z" fill="white"/>
+            <path d="M188.164 104.274C188.559 103.672 189.441 103.672 189.836 104.274L192.023 107.607C192.127 107.765 192.273 107.89 192.445 107.968L196.003 109.59C196.784 109.946 196.784 111.054 196.003 111.41L192.445 113.032C192.273 113.11 192.127 113.235 192.023 113.393L189.836 116.726C189.441 117.328 188.559 117.328 188.164 116.726L185.976 113.393C185.873 113.235 185.727 113.11 185.555 113.032L181.997 111.41C181.216 111.054 181.216 109.946 181.997 109.59L185.555 107.968C185.727 107.89 185.873 107.765 185.976 107.607L188.164 104.274Z" fill="white"/>
+            <path d="M93.6602 84.2993C94.0541 83.6898 94.9458 83.6898 95.3398 84.2993L96.641 86.3123C96.7436 86.4712 96.8892 86.5976 97.0608 86.677L99.0389 87.5925C99.8123 87.9504 99.8123 89.0496 99.0389 89.4075L97.0608 90.323C96.8892 90.4024 96.7436 90.5288 96.641 90.6877L95.3398 92.7007C94.9459 93.3102 94.0542 93.3102 93.6602 92.7007L92.359 90.6877C92.2564 90.5288 92.1108 90.4024 91.9392 90.323L89.9611 89.4075C89.1877 89.0496 89.1877 87.9504 89.9611 87.5925L91.9392 86.677C92.1108 86.5976 92.2564 86.4712 92.359 86.3123L93.6602 84.2993Z" fill="white"/>
+            <path d="M58.6602 116.299C59.0541 115.69 59.9458 115.69 60.3398 116.299L61.641 118.312C61.7436 118.471 61.8892 118.598 62.0608 118.677L64.0389 119.592C64.8123 119.95 64.8123 121.05 64.0389 121.408L62.0608 122.323C61.8892 122.402 61.7436 122.529 61.641 122.688L60.3398 124.701C59.9459 125.31 59.0542 125.31 58.6602 124.701L57.359 122.688C57.2564 122.529 57.1108 122.402 56.9392 122.323L54.9611 121.408C54.1877 121.05 54.1877 119.95 54.9611 119.592L56.9392 118.677C57.1108 118.598 57.2564 118.471 57.359 118.312L58.6602 116.299Z" fill="white"/>
+            <path d="M121.66 30.2993C122.054 29.6898 122.946 29.6898 123.34 30.2993L124.641 32.3123C124.744 32.4712 124.889 32.5976 125.061 32.677L127.039 33.5925C127.812 33.9504 127.812 35.0496 127.039 35.4075L125.061 36.323C124.889 36.4024 124.744 36.5288 124.641 36.6877L123.34 38.7007C122.946 39.3102 122.054 39.3102 121.66 38.7007L120.359 36.6877C120.256 36.5288 120.111 36.4024 119.939 36.323L117.961 35.4075C117.188 35.0496 117.188 33.9504 117.961 33.5925L119.939 32.677C120.111 32.5976 120.256 32.4712 120.359 32.3123L121.66 30.2993Z" fill="white"/>
+            <path d="M196.659 18.3107C197.052 17.6977 197.948 17.6977 198.341 18.3107L202.116 24.1903C202.219 24.3496 202.364 24.4766 202.536 24.5565L209.054 27.5935C209.825 27.9524 209.825 29.0476 209.054 29.4065L202.536 32.4435C202.364 32.5234 202.219 32.6504 202.116 32.8097L198.341 38.6893C197.948 39.3023 197.052 39.3023 196.659 38.6893L192.884 32.8097C192.781 32.6504 192.636 32.5234 192.464 32.4435L185.946 29.4065C185.175 29.0476 185.175 27.9524 185.946 27.5935L192.464 24.5565C192.636 24.4766 192.781 24.3496 192.884 24.1903L196.659 18.3107Z" fill="white"/>
+            <path d="M118.659 110.311C119.052 109.698 119.948 109.698 120.341 110.311L124.116 116.19C124.219 116.35 124.364 116.477 124.536 116.556L131.054 119.594C131.825 119.952 131.825 121.048 131.054 121.406L124.536 124.444C124.364 124.523 124.219 124.65 124.116 124.81L120.341 130.689C119.948 131.302 119.052 131.302 118.659 130.689L114.884 124.81C114.781 124.65 114.636 124.523 114.464 124.444L107.946 121.406C107.175 121.048 107.175 119.952 107.946 119.594L114.464 116.556C114.636 116.477 114.781 116.35 114.884 116.19L118.659 110.311Z" fill="white"/>
+          </svg>
+        </div>
+      </div>
+    </label>
+  </div>
+
+  <!-- Audio feedback -->
+  <audio id="click-sound" preload="auto">
+    <source src="audio.wav" type="audio/wav">
+  </audio>
+
+  <!-- ===== Theme Logic ===== -->
+  <script>
+    // --- DOM refs ---
+    const toggle = document.getElementById("theme-toggle");
+    const clickSound = document.getElementById("click-sound");
+    if (clickSound) {
+      clickSound.volume = 0.25;
+    }
+
+    // --- Theme application ---
+    function applyLightTheme() {
+      document.body.classList.remove("dark");
+    }
+
+    function applyDarkTheme() {
+      document.body.classList.add("dark");
+    }
+
+    function applyThemeState(isDark) {
+      if (isDark) {
+        applyDarkTheme();
+        return;
+      }
+      applyLightTheme();
+    }
+
+    function isMobileInteractionContext() {
+      return window.matchMedia("(pointer: coarse)").matches;
+    }
+
+    function triggerMobileHaptic() {
+      if (!isMobileInteractionContext()) {
+        return;
+      }
+      if (typeof navigator.vibrate === "function") {
+        navigator.vibrate(20);
+      }
+    }
+
+    function playClickFeedback() {
+      if (clickSound) {
+        clickSound.currentTime = 0;
+        clickSound.play().catch(() => {});
+      }
+      triggerMobileHaptic();
+    }
+
+    function setTheme(isDark) {
+      if (toggle.checked === isDark) {
+        return;
+      }
+      toggle.checked = isDark;
+      playClickFeedback();
+      applyThemeState(toggle.checked);
+    }
+
+    // --- Events ---
+    toggle.addEventListener("change", () => {
+      playClickFeedback();
+      applyThemeState(toggle.checked);
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        setTheme(true);
+      } else if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        setTheme(false);
+      }
+    });
+
+    // Sync initial state if checkbox is pre-checked
+    applyThemeState(toggle.checked);
+  </script>
+</body>
+</html>
