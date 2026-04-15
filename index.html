@@ -399,7 +399,7 @@
     </label>
   </div>
 
-  <!-- Audio feedback -->
+  <!-- Audio feedback (desktop only; mobile uses haptics) -->
   <audio id="click-sound" preload="auto">
     <source src="audio.wav" type="audio/wav">
   </audio>
@@ -412,6 +412,7 @@
   <script>
     // --- DOM refs ---
     const toggle = document.getElementById("theme-toggle");
+    const toggleLabel = document.querySelector('label[for="theme-toggle"]');
     const clickSound = document.getElementById("click-sound");
     if (clickSound) {
       clickSound.volume = 0.25;
@@ -438,21 +439,28 @@
       return window.matchMedia("(pointer: coarse)").matches;
     }
 
-    function triggerMobileHaptic() {
-      if (!isMobileInteractionContext()) {
+    /** Haptics must run synchronously inside a user gesture (pointerdown), not on "change". */
+    function triggerTouchHapticFromPointerEvent(event) {
+      if (event.pointerType !== "touch" && event.pointerType !== "pen") {
         return;
       }
-      if (typeof navigator.vibrate === "function") {
-        navigator.vibrate(20);
+      if (typeof navigator.vibrate !== "function") {
+        return;
       }
+      navigator.vibrate(40);
     }
 
     function playClickFeedback() {
-      if (clickSound) {
+      if (clickSound && !isMobileInteractionContext()) {
         clickSound.currentTime = 0;
         clickSound.play().catch(() => {});
       }
-      triggerMobileHaptic();
+    }
+
+    if (toggleLabel) {
+      toggleLabel.addEventListener("pointerdown", triggerTouchHapticFromPointerEvent, {
+        passive: true,
+      });
     }
 
     function setTheme(isDark) {
