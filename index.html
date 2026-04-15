@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Theme Switcher</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400&display=swap" rel="stylesheet">
   <style>
     /* ===== Base / Reset ===== */
     * {
@@ -308,6 +311,41 @@
       50% { opacity: 0.78; transform: scale(1); }
     }
 
+    /* ===== Footer Telegram ===== */
+    .footer-telegram {
+      position: fixed;
+      left: 50%;
+      bottom: 0;
+      transform: translateX(-50%);
+      z-index: 100;
+      padding-bottom: 24px;
+      font-family: "Montserrat", sans-serif;
+      font-weight: 400;
+      font-size: 14px;
+      color: #000;
+      text-align: center;
+      transition: color 450ms ease;
+    }
+
+    body.dark .footer-telegram {
+      color: #fff;
+    }
+
+    .footer-telegram a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .footer-telegram a:hover {
+      text-decoration: underline;
+    }
+
+    @media (min-width: 768px) {
+      .footer-telegram {
+        padding-bottom: 40px;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -365,6 +403,10 @@
   <audio id="click-sound" preload="auto">
     <source src="audio.wav" type="audio/wav">
   </audio>
+
+  <p class="footer-telegram">
+    <a href="https://telegram.me/ezzzz12345" target="_blank" rel="noopener noreferrer">telegram.me/ezzzz12345</a>
+  </p>
 
   <!-- ===== Theme Logic ===== -->
   <script>
